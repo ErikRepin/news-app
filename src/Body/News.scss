@@ -1,13 +1,12 @@
 $hoverBackgroundColor: #dbf8e25e;
 
-.card-group {
-    .card {
-        &:hover {
-            background-color: $hoverBackgroundColor;
-            cursor: pointer;
-            .card-title {
-                text-decoration: underline;
-            }
+.card {
+    &:hover {
+        background-color: $hoverBackgroundColor;
+        cursor: pointer;
+
+        .card-title {
+            text-decoration: underline;
         }
     }
 }
