@@ -8,6 +8,7 @@ import FormComponent from './Form';
 
 function NewsGroupComponet() {
   const [show, setShow] = useState(false);
+  const [formResponse, setFormResponse] = useState(null); 
 
   const handleShow = () => setShow(true);
   const handleClose = () => setShow(false);
@@ -18,13 +19,13 @@ function NewsGroupComponet() {
         Search
       </Button>
       <Row xs={1} md={2} lg={3} className="g-2">
-        {Array.from({ length: 10 }).map((_, idx) => (
+        {formResponse?.articles.map((article, idx) => (
           <Col key={idx}>
-            <NewsCardComponent />
+            <NewsCardComponent article={article} />
           </Col>
         ))}
       </Row>
-      <FormComponent show={show} handleClose={handleClose} />
+      <FormComponent show={show} handleClose={handleClose} setFormResponse={setFormResponse}/>
     </>
   );
 }
