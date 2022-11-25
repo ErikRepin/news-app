@@ -5,16 +5,17 @@ import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
 import DatePicker from 'react-datepicker';
 import moment from 'moment';
-import { getEverything } from '../../services/apiServices';
+import { setErrorMessage, setSearchParams } from '../../services/stateService';
+import { useSelector, useDispatch } from 'react-redux';
 import 'react-datepicker/dist/react-datepicker.css';
 
-
-function FormComponent({ show, handleClose, setFormResponse }) {
+function FormComponent({ show, handleClose, searchProps }) {
 
     const [startDateFrom, setStartDateFrom] = useState(new Date());
     const [startDateTo, setStartDateTo] = useState(new Date());
     const dateFormat = "dd.MM.yyyy";
-    
+    const pageSize = useSelector((state) => state.searchParams.pageSize);
+    const dispatch = useDispatch();
 
     const languages = [
         { label: 'English', code: 'en' },
@@ -23,30 +24,42 @@ function FormComponent({ show, handleClose, setFormResponse }) {
         { label: 'French', code: 'fr' },
         { label: 'Spanish', code: 'es' },
     ];
+    // Sobqtija eto zaimodeistvie mezdu polzovatelem i nashem prilozeniem
+    // Polzovatel delaet 4to v brauzere, brauzer lovit eti znachenija i peredajot informaciju nashemu prilozeniju
+    // V zavisemosti ot trigerov nashe prilozenie obrabatqvaet obrabatqvaet poluchanne dannqe
+    // Triggerq bqvajut raznqe, naprimer triger pri nazatii mqshki nazqvaetsja onClick
+    // Triggerq veshajutsja na elementq za kotorqmi mq hotim sledit
+    // Trigerq zapuskajut obrabotchiki
+    // Obrabatchiki eto obq4nqe funkcii
+    // Brauzer peredajot nashim obrabotchikam polnqe otchot o deistvii/sobqtii v vide objecta DOM
+    // Glavnoe svoistvo etogo objecta javljaetsja 'target' v kotorom hranitsja iformacija ob elemente nad kotorom proizoshlo sobitie
 
     function capitalize(str) {
         return str[0].toUpperCase() + str.substring(1);
     }
 
     async function handleSubmit(event) {
+        // // prevenDefault eto finkcija zastavjaet brauzer prekratit vqpolnjat izvestnoe emu deistvija etogo sobqtija
+        // v nashem slu4ae eto zastavjaet otmenit otpravku dannqh na server.
         event.preventDefault();
-
+     
         const data = {
             q: event.target.q.value,
             from: moment(startDateFrom).format("YYYY-MM-DDT00:00:00.000"),
             to: moment(startDateTo).format("YYYY-MM-DDT23:59:59.999"),
             language: event.target.language.value,
             searchIn: [...event.target.searchIn].filter(input => input.checked).map(input => input.value).join(','),
+            pageSize,
+            page: 1,
         };
 
         if(moment(data.from).isAfter(data.to)) {
-            alert("Wrong data from");
+            dispatch(setErrorMessage("Wrong data from"));
             return;
         }
-        
-        const response = await getEverything(data);
-        const responseData = await response.json();
-        setFormResponse(responseData);
+
+        dispatch(setSearchParams(data));
+        handleClose();
     }
 
     return (
@@ -58,7 +71,12 @@ function FormComponent({ show, handleClose, setFormResponse }) {
                 <Form onSubmit={handleSubmit}>
                     <Form.Group className="mb-3">
                         <Form.Label>Keywords</Form.Label>
-                        <Form.Control type="text" name="q" placeholder="Enter keywords or phrases" />
+                        <Form.Control 
+                            type="text" 
+                            name="q" 
+                            placeholder="Enter keywords or phrases" 
+                            defaultValue={searchProps.q}
+                            />
                         <Form.Text className="text-muted">
                             Advanced search is supported here
                         </Form.Text>
@@ -72,13 +90,14 @@ function FormComponent({ show, handleClose, setFormResponse }) {
                                 type="checkbox"
                                 value={type}
                                 id={`${type}-1`}
+                                defaultChecked={searchProps.searchIn.includes(type)}
                             />
                         </div>
                     ))}
 
                     <Form.Group className="mb-3">
                         <Form.Label>From - to</Form.Label>
-                        <InputGroup className="mb-3">
+                        <InputGroup className="mb-3 flex-nowrap">
                             <DatePicker
                                 className="form-control"
                                 selected={startDateFrom}
@@ -99,8 +118,7 @@ function FormComponent({ show, handleClose, setFormResponse }) {
 
                     <Form.Group className="mb-3">
                         <Form.Label>Select Language</Form.Label>
-                        <InputGroup className="mb-3 no-wrap"></InputGroup>
-                        <Form.Select name="language">
+                        <Form.Select name="language" defaultValue={searchProps.language}>
                             {languages.map((lang) => (
                                 <option key={lang.code} value={lang.code}>{lang.label}</option>
                             ))}
